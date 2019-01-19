@@ -1,0 +1,72 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.2.61'
+}
+
+group = 'revolut'
+version = '1.0-SNAPSHOT'
+
+// настройки для всех модулей
+allprojects {
+    apply plugin: 'kotlin'
+    apply plugin: 'idea'
+    apply plugin: 'maven-publish'
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+
+    dependencies {
+        compile group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: KOTLIN_VERSION
+        compile group: 'org.jetbrains.kotlin', name: 'kotlin-reflect', version: KOTLIN_VERSION
+        compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.9.6'
+        testCompile group: 'org.jetbrains.kotlin', name: 'kotlin-test-junit', version: KOTLIN_VERSION
+    }
+
+    configurations.all {
+        // используем logback во всем проекте
+        exclude group: "org.slf4j", module: "slf4j-log4j12"
+        exclude group: "log4j", module: "log4j"
+        
+        // чтобы не возникали ворнинги "kotlin-stdlib-jre7 is deprecated. Please use kotlin-stdlib-jdk7 instead"
+        exclude group: 'org.jetbrains.kotlin', module : 'kotlin-stdlib-jre7'
+        // чтобы не возникали ворнинги "kotlin-stdlib-jre8 is deprecated. Please use kotlin-stdlib-jdk8 instead"
+        exclude group: 'org.jetbrains.kotlin', module : 'kotlin-stdlib-jre8'
+    }
+
+    // настройки компиляции kotlin
+    kotlin {
+        // включение корутин
+        experimental {
+            coroutines 'enable'
+        }
+    }
+
+    compileKotlin {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
+    compileTestKotlin {
+        kotlinOptions.jvmTarget = "1.8"
+    }
+
+    // настройки плагина idea
+    idea {
+        module {
+            // меняется путь к compile-output, чтобы IDE компилировала в папку в которую компилирует сам gradle
+            outputDir file('build/classes/main')
+            testOutputDir file('build/classes/test')
+        }
+    }
+
+    // задачи сборки jar с исходниками и джавадоками (для maven-publish плагина)
+    task sourcesJar(type: Jar) {
+        from sourceSets.main.allJava
+        classifier = 'sources'
+    }
+
+    task javadocJar(type: Jar) {
+        from javadoc
+        classifier = 'javadoc'
+    }
+}

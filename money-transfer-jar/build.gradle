@@ -1,0 +1,27 @@
+plugins {
+    id 'com.github.johnrengelman.shadow' version '2.0.4'
+}
+
+description = 'jar'
+
+dependencies {
+    // тянет за собой slf4j
+    compile group: 'ch.qos.logback', name: 'logback-classic', version: '1.2.3'
+    
+    compile group: 'io.vertx', name: 'vertx-core', version: VERTX_VERSION
+    compile group: 'io.vertx', name: 'vertx-web', version: VERTX_VERSION
+
+    compile(group: 'io.vertx', name: 'vertx-lang-kotlin-coroutines', version: VERTX_VERSION) {
+        exclude group: 'org.jetbrains.kotlin'
+    }
+    
+    // для тестирования rest api
+    testCompile group: 'io.vertx', name: 'vertx-unit', version: VERTX_VERSION
+}
+
+// плагин shadow-jar
+jar {
+    manifest {
+        attributes 'Main-Class': "com.main.MainKt"
+    }
+}

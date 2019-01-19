@@ -1,0 +1,14 @@
+{
+  "options": {
+    "fileResolverCachingEnabled": false
+  },
+  "verticles": [
+    {
+      "deploy": true,
+      "verticleName": "com.revolut.rest.ApiVerticle",
+      "configFile": "api-config.json",
+      "options": {
+      }
+    }
+  ]
+}
