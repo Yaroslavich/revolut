@@ -40,5 +40,9 @@ enum class ErrorCode {
     /**
      *   Customer trying to transfer invalid amount of money
      */
-    INVALID_AMOUNT
+    INVALID_AMOUNT,
+    /**
+     *   Default error for unexpected cases
+     */
+    UNKNOWN_ERROR
 }

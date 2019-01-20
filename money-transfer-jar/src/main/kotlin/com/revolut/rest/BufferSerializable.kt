@@ -14,7 +14,7 @@ import io.vertx.core.buffer.Buffer
 
 open class BufferSerializable {
     fun toBuffer(): Buffer {
-        return Buffer.buffer(mapper.writeValueAsBytes(this) ?: RestTools.emptyJson)
+        return Buffer.buffer(mapper.writeValueAsBytes(this) ?: RestTools.errorJsonAsBytes)
     }
 
     companion object {

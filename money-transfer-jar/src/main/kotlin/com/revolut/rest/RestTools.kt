@@ -2,6 +2,8 @@ package com.revolut.rest
 
 import com.revolut.model.Entity
 import com.revolut.request.Request
+import com.revolut.response.ErrorCode
+import com.revolut.response.Response
 import com.revolut.service.Service
 import com.revolut.utils.deserialize
 import com.revolut.utils.loggerFor
@@ -15,6 +17,7 @@ import io.vertx.ext.web.handler.CorsHandler
 import io.vertx.kotlin.coroutines.dispatcher
 import kotlinx.coroutines.experimental.CoroutineDispatcher
 import kotlinx.coroutines.experimental.launch
+import kotlin.reflect.KClass
 
 /**
  * Some useful tools for building REST Api
@@ -25,7 +28,8 @@ import kotlinx.coroutines.experimental.launch
 object RestTools {
     private val log = loggerFor(javaClass)
 
-    val emptyJson = "{\"error\":404,\"desc\":\"\"}".toByteArray()
+    val errorJsonAsBuffer = Response<Entity>(null, ErrorCode.UNKNOWN_ERROR).toBuffer()
+    val errorJsonAsBytes: ByteArray = errorJsonAsBuffer.bytes
 
     private const val originAllowed = "*"
     private const val methodsAllowed = "GET, PUT, OPTIONS"
@@ -33,6 +37,7 @@ object RestTools {
     private const val contentType = "application/json;charset=utf-8"
     private const val allowCredentials = "true"
     private const val idParamDefaultValue:Long = 0L
+    const val idParamName = "id"
 
     fun buildOkResponse(response: HttpServerResponse, body: Buffer) {
         putCommonHeaders(response).end(body)
@@ -47,8 +52,8 @@ object RestTools {
                 .putHeader(HttpHeaders.ACCESS_CONTROL_ALLOW_CREDENTIALS, allowCredentials)
     }
 
-    private fun buildErrorResponse(response: HttpServerResponse, statusCode: Int) {
-        putCommonHeaders(response).setStatusCode(statusCode).end(Buffer.buffer(emptyJson))
+    fun buildErrorResponse(response: HttpServerResponse, statusCode: Int, errorBody: Buffer) {
+        putCommonHeaders(response).setStatusCode(statusCode).end(errorBody)
     }
 
     fun enableCors(router: Router) {
@@ -73,26 +78,32 @@ object RestTools {
         return paramValue.toLongOrNull()?: idParamDefaultValue
     }
 
-    inline fun <reified E: Entity, reified S: Service<E>, reified R: Request<E, S>> get(options: RouterOptions, service: S) {
+    inline fun <reified E: Entity, reified S: Service<E>> get(options: RouterOptions, service: S) {
         val defaultDispatcher = options.vertx.dispatcher()
 
         options.router.get("/${options.apiVersion}/${options.path}").handler { ctx ->
             processRequest(defaultDispatcher, ctx) {
-                val id = getSafeId(ctx, "id")
+                val id = getSafeId(ctx, idParamName)
                 val response = service.getEntity(id)
                 buildOkResponse(ctx.response(), response.toBuffer())
             }
         }
     }
 
-    inline fun <reified E: Entity, reified S: Service<E>, reified R: Request<E, S>> post(options: RouterOptions, service: S) {
+    inline fun <reified E: Entity, reified S: Service<E>, reified R: Request<E, S>>
+            post(options: RouterOptions, service: S, requestClass: Class<R>) {
+
         val defaultDispatcher = options.vertx.dispatcher()
 
         options.router.post("/${options.apiVersion}/${options.path}").handler { ctx ->
             processRequest(defaultDispatcher, ctx) {
                 val request: R = deserialize(ctx.body)
-                val response = request.process(service)
-                buildOkResponse(ctx.response(), response.toBuffer())
+                if (!requestClass.isInstance(request)) {
+                    buildErrorResponse(ctx.response(), 404, errorJsonAsBuffer)
+                } else {
+                    val response = request.process(service)
+                    buildOkResponse(ctx.response(), response.toBuffer())
+                }
             }
         }
     }
@@ -103,7 +114,7 @@ object RestTools {
                 requestHandler()
             } catch(e: Exception) {
                 log.error("Request ${ctx.currentRoute().path}  body = ${ctx.bodyAsString}", e)
-                buildErrorResponse(ctx.response(), 404)
+                buildErrorResponse(ctx.response(), 404, errorJsonAsBuffer)
             }
         }
     }
