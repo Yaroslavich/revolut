@@ -21,21 +21,36 @@ import io.vertx.ext.web.Router
  */
 
 object CustomerRestApi {
-    // Rest Api versioning for future needs
+    /**
+     *   Rest Api versioning for future needs
+     *   Full path for the router has form:
+     *
+     *   /apiVersion/entityPath
+     */
     private const val apiVersion = "v1"
 
     fun attach(vertx: Vertx, router: Router) {
         val routerOptions = RouterOptions(vertx, router, apiVersion, "")
 
+        /**
+         *   Account service api
+         */
         get(routerOptions.copy(path = "account"), accountService)
         post(routerOptions.copy(path = "account/create"), accountService, CreateAccountRequest::class.java)
         post(routerOptions.copy(path = "account/find"), accountService, FindAccountByCustomerIdRequest::class.java)
         post(routerOptions.copy(path = "account/delete"), accountService, DeleteAccountRequest::class.java)
-
-        post(routerOptions.copy(path = "customer/create"), customerService, CreateCustomerRequest::class.java)
-        post(routerOptions.copy(path = "customer/block"), customerService, BlockCustomerRequest::class.java)
-        post(routerOptions.copy(path = "transfer"), moneyTransferService, MoneyTransferRequest::class.java)
         post(routerOptions.copy(path = "deposit"), accountService, MoneyDepositRequest::class.java)
         post(routerOptions.copy(path = "withdraw"), accountService, MoneyWithdrawRequest::class.java)
+
+        /**
+         *   Customer service api
+         */
+        post(routerOptions.copy(path = "customer/create"), customerService, CreateCustomerRequest::class.java)
+        post(routerOptions.copy(path = "customer/block"), customerService, BlockCustomerRequest::class.java)
+
+        /**
+         *   Transaction service api
+         */
+        post(routerOptions.copy(path = "transfer"), moneyTransferService, MoneyTransferRequest::class.java)
     }
 }
