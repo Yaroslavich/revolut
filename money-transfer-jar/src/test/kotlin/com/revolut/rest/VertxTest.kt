@@ -470,6 +470,29 @@ class VertxTest {
     /**
      *   positive:
      *
+     *   get account by account id
+     *
+     *   One customer tries to get his account. Deposit succeeds
+     */
+    @Test
+    fun getAccountByAccountIdTest(context: TestContext) {
+        val customerId = ensureCreateCustomer(context, firstCustomerData)
+        assertNotNull(customerId)
+
+        val accountId = ensureCreateAccount(context, customerId!!, CurrencyCode.RUR)
+        assertNotNull(accountId)
+
+        getAccount(context, accountId!!) {responseBody ->
+            val moneyTransferResult: Response<Account> = deserialize(responseBody)
+            context.assertEquals(AccountMath.zero, moneyTransferResult.entity?.amount)
+            context.assertEquals(CurrencyCode.RUR, moneyTransferResult.entity?.currency)
+            context.assertEquals(ErrorCode.OK, moneyTransferResult.error)
+        }
+    }
+
+    /**
+     *   positive:
+     *
      *   deposit money to given account
      *
      *   One customer tries to deposit money to his account. Deposit succeeds
@@ -691,6 +714,10 @@ class VertxTest {
             val moneyDepositResult: Response<Account> = deserialize(responseBody)
             context.assertEquals(ErrorCode.OK, moneyDepositResult.error)
         }
+    }
+
+    private fun getAccount(context: TestContext, accountId: Long, onResponse: (Buffer) -> TestContext) {
+        httpGet(context, "account", accountId, onResponse)
     }
 
     private fun findAccount(context: TestContext, customerId: Long, currency: CurrencyCode, onResponse: (Buffer) -> TestContext) {
