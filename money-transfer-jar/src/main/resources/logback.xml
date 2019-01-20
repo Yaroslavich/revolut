@@ -1,21 +1,4 @@
 <configuration debug="true" scan="true">
-    <property name="LOG_PATH" value="/opt/data-provider/logs"/>
-
-    <appender name="SYSTEMLOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/system.log</file>
-        <triggeringPolicy class="ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy">
-            <maxFileSize>40MB</maxFileSize>
-        </triggeringPolicy>
-        <rollingPolicy class="ch.qos.logback.core.rolling.FixedWindowRollingPolicy">
-            <fileNamePattern>${LOG_PATH}/system.log.%i.log</fileNamePattern>
-            <minIndex>1</minIndex>
-            <maxIndex>40</maxIndex>
-        </rollingPolicy>
-        <encoder>
-            <pattern>%-5level %date{ISO8601} [%thread] %c{36}:%line - %msg%n</pattern>
-        </encoder>
-    </appender>
-
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
             <pattern>%-5level %date{ISO8601} [%thread] %c{36}:%line - %msg%n</pattern>
