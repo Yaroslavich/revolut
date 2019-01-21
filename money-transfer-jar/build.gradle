@@ -22,6 +22,6 @@ dependencies {
 // плагин shadow-jar
 jar {
     manifest {
-        attributes 'Main-Class': "com.main.MainKt"
+        attributes 'Main-Class': "com.revolut.main.MainKt"
     }
 }
