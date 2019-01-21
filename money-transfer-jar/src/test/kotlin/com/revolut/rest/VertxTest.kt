@@ -1,23 +1,23 @@
 package com.revolut.rest
 
-import com.revolut.response.ErrorCode
-import com.revolut.response.Response
 import com.revolut.model.*
 import com.revolut.request.*
-import com.revolut.utils.AccountMath
+import com.revolut.response.ErrorCode
+import com.revolut.response.Response
 import com.revolut.trx.PeriodicJob
+import com.revolut.utils.AccountMath
 import com.revolut.utils.deserialize
-import org.junit.After
-import io.vertx.core.Vertx
-import io.vertx.core.json.JsonObject
 import io.vertx.core.DeploymentOptions
+import io.vertx.core.Vertx
 import io.vertx.core.buffer.Buffer
+import io.vertx.core.json.JsonObject
 import io.vertx.ext.unit.TestContext
-import java.io.IOException
-import org.junit.Before
 import io.vertx.ext.unit.junit.VertxUnitRunner
+import org.junit.After
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.IOException
 import java.math.BigDecimal
 import java.net.ServerSocket
 import kotlin.test.assertNotNull
@@ -25,7 +25,6 @@ import kotlin.test.assertNotNull
 
 @RunWith(VertxUnitRunner::class)
 class VertxTest {
-
     private val apiVersion = "v1"
 
     private val firstCustomerData = "R2-D2"
@@ -574,6 +573,52 @@ class VertxTest {
         processAllTransactions()
 
         ensureAccountAmount(context, firstCustomerId, AccountMath.zero, CurrencyCode.RUR)
+        ensureAccountAmount(context, secondCustomerId, AccountMath.hundred, CurrencyCode.RUR)
+    }
+
+    /**
+     *   positive:
+     *
+     *   cross transfer
+     *
+     *   One customer tries to transfer money to another customer while another tries to transfer money back to first one.
+     *   Both transfers succeed
+     */
+    @Test
+    fun crossTransferTest(context: TestContext) {
+        val firstCustomerId = ensureCreateCustomer(context, firstCustomerData)
+        assertNotNull(firstCustomerId)
+        val firstAccountId = ensureCreateAccount(context, firstCustomerId!!, CurrencyCode.RUR)
+        assertNotNull(firstAccountId)
+
+        ensureDeposit(context, firstCustomerId, AccountMath.hundred, CurrencyCode.RUR)
+        ensureAccountAmount(context, firstCustomerId, AccountMath.hundred, CurrencyCode.RUR)
+
+        val secondCustomerId = ensureCreateCustomer(context, secondCustomerData)
+        assertNotNull(secondCustomerId)
+        val secondAccountId = ensureCreateAccount(context, secondCustomerId!!, CurrencyCode.RUR)
+        assertNotNull(secondAccountId)
+
+        ensureDeposit(context, secondCustomerId, AccountMath.hundred, CurrencyCode.RUR)
+        ensureAccountAmount(context, secondCustomerId, AccountMath.hundred, CurrencyCode.RUR)
+
+        transfer(context, firstCustomerId, secondCustomerId, AccountMath.hundred, CurrencyCode.RUR)  { responseBody ->
+            val moneyTransferResult: Response<MoneyTransaction> = deserialize(responseBody)
+            context.assertEquals(AccountMath.hundred, moneyTransferResult.entity?.amount)
+            context.assertEquals(ErrorCode.OK, moneyTransferResult.error)
+        }
+
+        transfer(context, secondCustomerId, firstCustomerId, AccountMath.hundred, CurrencyCode.RUR)  { responseBody ->
+            val moneyTransferResult: Response<MoneyTransaction> = deserialize(responseBody)
+            context.assertEquals(AccountMath.hundred, moneyTransferResult.entity?.amount)
+            context.assertEquals(ErrorCode.OK, moneyTransferResult.error)
+        }
+        ensureAccountAmount(context, firstCustomerId, AccountMath.zero, CurrencyCode.RUR)
+        ensureAccountAmount(context, secondCustomerId, AccountMath.zero, CurrencyCode.RUR)
+
+        processAllTransactions()
+
+        ensureAccountAmount(context, firstCustomerId, AccountMath.hundred, CurrencyCode.RUR)
         ensureAccountAmount(context, secondCustomerId, AccountMath.hundred, CurrencyCode.RUR)
     }
 
