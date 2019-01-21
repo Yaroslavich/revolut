@@ -1,5 +1,12 @@
 # revolut
 
+## Build
+
+Generate gradle wrapper, then:
+```
+./gradlew clean shadowjar
+```
+
 ## Run
 ```
 java -jar money-transfer-jar/build/libs/money-transfer-jar-all.jar
