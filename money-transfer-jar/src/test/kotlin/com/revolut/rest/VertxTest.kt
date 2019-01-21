@@ -771,6 +771,9 @@ class VertxTest {
             }
         }
         async.awaitSuccess()
+
+        // TODO: known issue of netty https://github.com/netty/netty/issues/6220
+        Thread.sleep(100)
     }
 
     private fun httpPost(context: TestContext, path: String, requestBody: Buffer, onResponse: (Buffer) -> TestContext) {
@@ -785,6 +788,9 @@ class VertxTest {
             }
         }.end(requestBody)
         async.awaitSuccess()
+
+        // TODO: known issue of netty https://github.com/netty/netty/issues/6220
+        Thread.sleep(100)
     }
 
     private fun processAllTransactions() {
